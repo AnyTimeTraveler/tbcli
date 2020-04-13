@@ -7,9 +7,11 @@ This handy tool should allow you to use a telegram bot like a logger.
 `-s` or `--send-only` immediately exits as soon as there is nothing more to send (stdin closes)
 
 `-i` or `--id` sets the id of the person/group/channel you want to send the message to.
+
 Can also be supplied via environment variable: `TELEGRAM_RECEIVER_ID`
 
 `-t` or `--token` sets the token for the bot you are using.
+
 Can also be supplied via environment variable: `TELEGRAM_BOT_TOKEN`
 
 # Examples
