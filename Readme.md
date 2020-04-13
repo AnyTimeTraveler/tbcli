@@ -4,7 +4,9 @@ This handy tool should allow you to use a telegram bot like a logger.
 
 ### Arguments:
 
-`-s` or `--send-only` immediately exits as soon as there is nothing more to send (stdin closes)
+`-s` or `--send-only` does not start listening for new messages from Telegram and immediately exits as soon as there is nothing more to send. (stdin closes)
+
+`-r` or `--receive-only` does not start listening for new messages from stdin and prints new messages from Telegram until stdout closes or the program is closed.
 
 `-i` or `--id` sets the id of the person/group/channel you want to send the message to.
 

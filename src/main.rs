@@ -1,7 +1,7 @@
 #![feature(async_closure)]
 
 use std::{env, io};
-use std::io::Write;
+use std::io::{BufRead, Write};
 
 use argparse::{ArgumentParser, Store, StoreTrue};
 use futures::{join, StreamExt};
@@ -11,6 +11,7 @@ struct Options {
     id: String,
     token: String,
     send_only: bool,
+    receive_only: bool,
 }
 
 #[tokio::main]
@@ -19,6 +20,7 @@ async fn main() -> Result<(), Error> {
         id: "".to_string(),
         token: "".to_string(),
         send_only: false,
+        receive_only: false,
     };
 
     {  // this block limits scope of borrows by ap.refer() method
@@ -27,6 +29,7 @@ async fn main() -> Result<(), Error> {
         ap.refer(&mut options.id).add_option(&["-i", "--id"], Store, "ID of receiving user/group/channel");
         ap.refer(&mut options.token).add_option(&["-t", "--token"], Store, "Telegram API KEY");
         ap.refer(&mut options.send_only).add_option(&["-s", "--send-only"], StoreTrue, "Send only");
+        ap.refer(&mut options.receive_only).add_option(&["-r", "--receive-only"], StoreTrue, "Receive only");
         ap.parse_args_or_exit();
     }
 
@@ -40,6 +43,8 @@ async fn main() -> Result<(), Error> {
     let api = Api::new(options.token.as_str());
     if options.send_only {
         Ok(send(api.clone(), &options).await?)
+    } else if options.receive_only {
+        Ok(receive(api).await?)
     } else {
         let (r_send, r_receive) = join!(
             send(api.clone(), &options),
@@ -63,29 +68,21 @@ async fn send(api: Api, options: &Options) -> Result<(), Error> {
             return Ok(());
         }
     };
-    let stdin = io::stdin();
+    let stdin_unlocked = io::stdin();
+    let stdin = stdin_unlocked.lock();
     let user_id: UserId = user_id.into();
-    let mut input = String::new();
-    loop {
-        match stdin.read_line(&mut input) {
-            Ok(0) => return Ok(()),
-            Ok(_) => {
-                if !input.is_empty() {
-                    api.send(user_id.text(&input)).await?;
-                }
-                input.clear();
-            }
-            Err(error) => {
-                eprintln!("error: {}", error);
-                return Ok(());
-            }
+    for line in stdin.lines() {
+        if let Ok(text) = line {
+            api.send(user_id.text(text)).await?;
         }
     }
+    Ok(())
 }
 
 async fn receive(api: Api) -> Result<(), Error> {
     let mut stream = api.stream();
-    let mut stdout = io::stdout();
+    let stdout_unlocked = io::stdout();
+    let mut stdout = stdout_unlocked.lock();
 
     while let Some(update) = stream.next().await {
         let update = update?;
