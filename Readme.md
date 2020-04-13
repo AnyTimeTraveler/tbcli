@@ -32,7 +32,7 @@ You can use this to pipe anything into the bot:
 To be informed of any server errors on a development box.
 
 ```bash
-% tail -f /var/log/nginx/access.log | grep 503 | tgcli --send-only
+% tail -f /var/log/nginx/access.log | grep 503 | tgcli -s
 ```
 
 ## Receiving messages
@@ -42,16 +42,16 @@ Print them to the command line:
 - Ignores non-text messages.
 
 ```bash
-% tbcli < /dev/null
+% tbcli --receive-only
 USERNAME,FIRST_NAME,LAST_NAME,USER_ID,CHAT_ID,EPOCH_SECONDS,MESSAGE_TEXT
 ```
 
-Ignore all but the message:
+Ignore all but the message text:
 ```bash
-% tbcli < /dev/null | cut -d, -f7
+% tbcli -r | cut -d, -f7
 ``` 
 
 # Known Bugs
 
 1. In receive-mode, the input and output race with each other, so sending and receiving at the same time is problematic.
-   Best to use `< /dev/null` to close the input stream, so the output stream has the lock guaranteed.
+   Best to use `-r` or `--receive-only` to close the input stream, so the output stream has the lock guaranteed.
